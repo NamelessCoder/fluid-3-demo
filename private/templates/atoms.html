@@ -1,0 +1,195 @@
+<demo:frame.default />
+
+<f:description>
+    Outputs a list of Atoms.
+
+    Renders a full list of all Atoms contained in this example extension. Outputs arguments required by the Atom,
+    a description (if one is provided, like it is here) and usage examples (again, if provided).
+</f:description>
+
+<f:example title="Standard usage">
+    <demo:atoms />
+</f:example>
+
+<f:section name="main">
+    <div class="jumbotron bg-dark text-white">
+        <h2>Atoms in Fluid</h2>
+        <p class="lead">
+            Replacement for Layouts and Partials - atomic in nature and supporting embedded documentation/parameters.
+        </p>
+    </div>
+    <p class="lead">
+        Atoms is the concept that replaces Partials and Layouts and which allows Fluid template files to declare arguments
+        (which can have default values) and embed documentation, examples and more. They are named "Atoms" because of the
+        direct connection to the concept of "Atomic Design" which in short means creating reusable atoms of templates
+        that can have different versions of output, and which are then used to create larger and larger "organisms". For
+        example, "headline" and "paragraph" might be atoms and "paragraph with title" could be an organism consisting of
+        those two atoms, with conditions to not output one or the other if not specified.
+    </p>
+    <div class="alert alert-danger">
+        <h4>Atoms replace Partials and Layouts</h4>
+        <p>
+            With the introduction of Atoms the old concepts of Partials and Layouts have been deprecated and will be
+            removed in Fluid 4.0. Atoms provide the same - and many more - capabilities as the concepts it replaces.
+        </p>
+    </div>
+    <h2>Atoms as Partials</h2>
+    <p>
+        Atoms can be described as <i>a Fluid template file which exists in a path that is registered as namespace</i>.
+        Once a path is registered as namespace in Fluid, all templates within that path can be used indistinguishable
+        from ViewHelpers:
+    </p>
+    <pre class="fluid">$renderingContext->getViewHelperResolver()->addAtoms('myns', '/path/to/files/');</pre>
+    <p>
+        This path can then for example contain file <code>/path/to/files/some/file.html</code> which would make
+        <code><myns:some.file /></code> render that file. The file can then declare
+        arguments it requires:
+    </p>
+    <pre class="fluid"><f:parameter name="foo" type="string" description="Argument foo, required" required="1" />
+<f:parameter name="number" type="int" description="Optional number"/>
+You passed foo: {foo}
+<f:if condition="{number}" then="You passed number: {number}" /></pre>
+        <p>
+            And once registered can be used within Fluid:
+        </p>
+        <pre class="fluid"><myns:some.file foo="bar" /></pre>
+        <p>
+            And will fail unless passed all required arguments - in this case, argument <code>foo</code> must be provided.
+        </p>
+        <h2>Atoms as Layouts</h2>
+        <p>
+            Atoms can also be used as Layouts - what an Atom does (which type it is) depends entirely on what the Atom file
+            contains. For example, a Partial-style Atom might contain required arguments and have no sections. Whereas a
+            Layout-style Atom likely doesn't contain arguments, uses few or no ViewHelpers, and basically just renders
+            sections or other Atoms to generate output.
+        </p>
+        <pre class="fluid"><html>
+<head>
+    <title>This is a Layout-style Atom</title>
+</head>
+<body>
+    <h1>file: /path/to/files/layout/default.html</h1>
+    It has no arguments and it renders a section (from the template that uses it as Layout):
+    <this:main />
+</body>
+</html></pre>
+        <p>
+            This Atom is then used as Layout simply by including it in the template that should use it as Layout:
+        </p>
+        <pre class="fluid"><myns:layout.default />
+
+<f:section name="main">
+    This is rendered from the Layout-style Atom because of the pseudo-ViewHelper above
+</f:section></pre>
+        <p>
+            And when the file using the Layout-style Atom is rendered, it outputs:
+        </p>
+        <pre class="output"><html>
+<head>
+    <title>This is a Layout-style Atom</title>
+</head>
+<body>
+    <h1>file: /path/to/files/layout/default.html</h1>
+    It has no arguments and it renders a section (from the template that uses it as Layout):
+    This is rendered from the Layout-style Atom because of the pseudo-ViewHelper above
+</body>
+</html></pre>
+    <p>
+        Which means it works precisely the same as Layouts did in earlier versions but requires using the
+        namespace-and-tag-name approach instead of <code>f:layout</code> which is now deprecated.
+    </p>
+
+    <h2>Sections in Atoms</h2>
+    <p>
+        An Atom can contain sections just like any other template file. Once defined, a section can be rendered with
+        <code><this:sectionName arbitrary="foo" /></code> or <code>{this:sectionName(arbitrary: 'foo')}</code>. There
+        are two different behaviors based on whether the Atom is used as layouts would be, or rendered as Atom:
+    </p>
+    <ul>
+        <li>
+            Used in Atoms you use as partials were used earlier, it will render sections within itself when you use
+            <code><this:sectionName /></code>.
+        </li>
+        <li>But use in layout-style Atoms and it will render sections from the template that used the Atom as layout.</li>
+    </ul>
+    <p>
+        You can utilise this difference to define <code><f:section>...</f:section></code> inside Atoms you use as layout.
+        This lets you render the layout-style Atom itself <strong>with default outputs from default sections</strong>.
+        And that means you can have a universal fallback rendering as part of the layout-style Atom - rendering the
+        layout directly renders a default view without failures about "missing section". But rendering it as layout used
+        by another template instead renders the sections from that template.
+    </p>
+    <p>
+        In short: when you use <code><this:... /></code> then <strong>the "this" part refers to the template that's
+        in the process of being rendered</strong>. Just like in PHP where <code>$this</code> always refers to "the
+        active instance".
+    </p>
+
+    <h2>Rendering an Atom's section from outside the Atom</h2>
+    <div class="alert alert-info">
+        <h4>New practice</h4>
+        <p>
+            This section describes the equivalent of <code><f:render partial="some-partial" section="foo" /></code>
+            which is now done with Atoms instead of <code><f:render /></code>. <strong>Please note that it is generally
+            better practice to create multiple Atoms instead of making an Atom contain multiple sections that are
+            intended to be rendered from outside the Atom.</strong>
+        </p>
+    </div>
+    <p>
+        Sometimes, sections contained in Atoms are intended to be rendered from outside the Atom - which was a universal
+        practice with the concept of Partials; having a Partial with multiple public sections. This is still supported
+        by appending a section's name to the end of the Atom's name.
+    </p>
+    <p>
+        Consider the following examples assuming you have an Atom named <code>image.html</code> that has two sections,
+        <code>responsive</code> and <code>lazy</code> defined in it:
+    </p>
+    <pre class="fluid"><my:image-responsive />
+<my:image-lazy /></pre>
+    <p>
+        However, the Atoms feature makes a lot more sense if you instead create more atomic (hence the name) folder
+        structures and divide your Atoms into multiple files (each with its own arguments, for example). Consider the
+        following directory structure:
+    </p>
+    <ul>
+        <li>image/responsive.html</li>
+        <li>image/lazy.html</li>
+        <li>image.html</li>
+    </ul>
+    <p>
+        This would add one generic "image" Atom and two specific types of Atom, <code>lazy.html</code> and
+        <code>responsive.html</code> which would render different types of images. The generic <code>image.html</code>
+        can then be a proxy template that renders one of two sub-types of image.
+    </p>
+    <p>
+        Rendering these is then done slightly different from appending the section name to an Atom's name:
+    </p>
+    <pre class="fluid"><my:image.responsive />
+<my:image.lazy /></pre>
+    <p>
+        Which looks more natural.
+    </p>
+    <h4>Developer notes about sections</h4>
+    <ul>
+        <li>
+            The first method with hyphen in Atom name is good to use if you like big template files that, for example,
+            contain shared sections. That being said, split Atoms are significantly better for performance and means you
+            don't parse template code that won't also be rendered.
+        </li>
+        <li>
+            The same Atom can be rendered from many other Atoms, for example a <code>headline</code> Atom can be reused
+            as many times as you want, from any other Atom. This usually provides the same supports as a section would.
+        </li>
+        <li>
+            Large template files take more time to parse - for example, if you only need to render a single section
+            from a very large Atom template, the entire Atom template still has to be parsed. The more you split your
+            templates, the smaller the template becomes and the faster they are to parse.
+        </li>
+        <li>
+            But once you've split your templates, <strong>they can no longer share parameter definitions and/or embedded
+            examples and descriptions.</strong> This can be seen as both good and bad depending on your preference.
+            It allows you to more concisely document each sub-Atom and use fewer parameters - but requires that you put
+            documentation into each of the sub-Atoms' template files, and possibly duplicate some parameter definitions.
+        </li>
+    </ul>
+</f:section>

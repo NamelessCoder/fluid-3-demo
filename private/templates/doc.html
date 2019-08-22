@@ -1,0 +1,31 @@
+<f:description>
+    Renders documentation for atoms provided in argument.
+</f:description>
+
+<f:parameter name="lister" type="NamelessCoder\Fluid3Demo\Lister" description="An instance of the Lister from this demo package" required="1" />
+
+<demo:frame.default />
+
+<f:section name="main">
+    <div class="jumbotron">
+        <h2>Atom/ViewHelper documentation</h2>
+        <p>
+            This view shows a list of every Atom contained in this demo package. Clicking an Atom takes you to a
+            detailed and automatically rendered documentation of the Atom. The indented lists are lists of sections
+            within the parent Atom - these sections are also Atoms which contain the same type of documentation.
+        </p>
+        <p class="lead">
+            Since Fluid 3.0 all templates and ViewHelpers share the same documentation-extracting API.
+        </p>
+    </div>
+    <div class="row">
+        <div class="col-6">
+            <h1>Atoms</h1>
+            <demo:list.components components="{lister.atoms}" prefix="Template: " badges="0" />
+        </div>
+        <div class="col-6">
+            <h1>ViewHelpers</h1>
+            <demo:list.components components="{lister.viewHelpers}" badges="1" />
+        </div>
+    </div>
+</f:section>

@@ -1,0 +1,132 @@
+<f:description>
+    Displays information about the new PHP API of Fluid.
+</f:description>
+
+<f:example>
+    <demo:php />
+</f:example>
+
+<demo:frame.default />
+
+<f:section name="main">
+    <f:description>
+        The "main" section of <demo:php />. Outputs the page's body content.
+    </f:description>
+    <div class="jumbotron bg-dark text-white">
+        <h2>PHP API</h2>
+        <p class="lead">
+            The PHP side of Fluid has been nearly completely rewritten.
+        </p>
+    </div>
+
+    <h2>Performance and Complexity</h2>
+    <p>
+        Fluid's parsing and rendering logic has been completely rewritten with two goals in mind:
+    </p>
+    <ol>
+        <li>
+            Removing the distinction between different types of "things you can use in Fluid templates" to combine
+            all of them into one concept: Components. A parsed template file is a Component. A ViewHelper is a
+            Component. A section is a Component. An Expression is a Component.
+        </li>
+        <li>
+            Improving the parsing performance to a point where compiling a template is no longer necessary.
+        </li>
+    </ol>
+    <p>
+        Both of these goals have been reached in Fluid 3.0. The first item has drastically reduced the complexity
+        of Fluid's internal API by letting all Components share the same interface. The second item however is maybe
+        more interesting: the performance.
+    </p>
+    <p class="text-danger">
+        For example this demo site contains approximately 50KB of Fluid templates and Fluid both parses, extracts
+        embedded documentation from, and renders literally all of those templates in less than 100ms on my 2.4ghz
+        Intel CPU - on a single-threaded version of PHP 7.3 that has debugging enabled.
+    </p>
+    <p>
+        Around half of the complexity of Fluid was in the compiling step that is now gone. There are no more peak
+        loads when templates are not compiled - and there are no more cache warming concerns.
+    </p>
+
+    <h2>View and RenderingContext</h2>
+    <p>
+        In Fluid 3.0 several concepts have been deprecated and scheduled for removal:
+    </p>
+    <ol>
+        <li>The entire <code>View</code> namespace has been deprecated.</li>
+        <li>Including the <code>TemplatePaths</code> class.</li>
+        <li>Including the concepts of Templates, Layouts and Partials</li>
+        <li>Including any trace of MVC opinionated resolving (deprecated, but not yet removed)</li>
+    </ol>
+    <p>
+        To replace these concepts a much simpler API is provided. It all starts with the <code>RenderingContext</code>.
+        For example, creating an instance of (your preferred type of) RenderingContext gives you access to all parts
+        of the Fluid API, as determined by the type of RenderingContext. Fluid only provides on type of RenderingContext
+        but frameworks usually provide a custom type which initialises itself with things like namespaces, parser
+        configuration or special implementations of utilities.
+    </p>
+    <pre class="php">$renderingContext = new RenderingContext();
+
+// Configure our context to disable escaping
+$renderingContext->getParserConfiguration()->setFeatureState(Configuration::FEATURE_ESCAPING, false);
+
+// Render a given template file into a variable
+$output = $renderingContext->getRenderer()->renderFile('/path/to/myFile.html');</pre>
+    <p>
+        The RenderingContext contains all the utility classes used by Fluid - the TemplateParser, ViewHelperResolver,
+        FluidRenderer, VariableProvider, ViewHelperVariableContainer, ErrorHandler and more. It is where you should
+        always start your integration, whether that integration parses Fluid to extract embedded Components, or renders
+        Fluid templates.
+    </p>
+    <p class="lead">
+        Atoms is the concept that replaces Partials and Layouts. <a href="?view=atoms">It is described in more detail in
+        the section dedicated to Atoms</a> - this section explains how Atoms work from the PHP side.
+    </p>
+
+    <div class="alert alert-primary">
+        <h4>Pro-tip</h4>
+        <p>
+            A <code>ComponentInterface</code> returned by <i>parsing</i> a template is not evaluated until you call
+            the <code>evaluate()</code> method on the instance. You can extract the Components and analyse their
+            arguments, children etc. without ever triggering the code that a ViewHelper for example would call.
+            <strong>Arguments retrieved this way are not yet evaluated. If you need to evaluate arguments to know their
+            value, be careful to prepare the rendering context and variable provider with all necessary context.</strong>
+        </p>
+    </div>
+
+    <h2>Extracting Components</h2>
+    <p>
+        An essential part of how Fluid 3.0 works is the ability to embed and later extract Components without rendering
+        them during the normal rendering pass. This is how a section can be extracted from a template and then rendered.
+        It also allows special types of embedded documentation to be extracted.
+    </p>
+    <pre class="php">$parsed = $renderingContext->getTemplateParser()->parseFile('/path/to/my/file.html');
+
+// Extract one section - throws ChildNotFoundException on not found
+$sectionFoo = $parsed->getNamedChild('foo');
+
+// Or extract all sections as a new RootNode with children
+$allSections = $parsed->getTypedChildren(EntryNode::class);
+
+// Then render it by passing the RenderingContext:
+$output = $sectionFoo->evaluate($renderingContext);
+
+// Or copy all sections from $parsed to $otherParsed
+$otherParsed = $renderingContext->getTemplateParser()->parseFile('/path/to/other/file.html');
+$otherParsed->addChild($allSections);</pre>
+    <p>
+        An extracted Component can also carry arguments and documentation:
+    </p>
+    <pre class="php">$definitions = $parsed->getArguments()->getDefinitions();
+
+// $definitions contains an associative array of arguments
+$typeOfBarArgument = $definitions['bar']->getType();
+$isBarArgumentRequired = $definitions['bar']->isRequired();
+
+// Usage can be extracted (to a RootNode with children):
+$examples = $parsed->getTypedChildren(ExampleViewHelper::class);
+
+// And description can be extracted the same way, but flattened to create a string:
+$description = (string) $parsed->getTypedChildren(DescriptionViewHelper::class)->flatten(true);</pre>
+
+</f:section>

@@ -1,0 +1,238 @@
+<demo:frame.default />
+
+<f:section name="main">
+    <div class="jumbotron bg-dark text-white">
+        <h2>ViewHelpers</h2>
+        <p class="lead">
+            ViewHelpers have a new best practice that is less complicated to use.
+        </p>
+    </div>
+
+    <h2>Removals</h2>
+    <p>
+        Several functions and properties have been removed from ViewHelpers - some deprecated since version 1.x and
+        others replaced by new strategies. These changes are:
+    </p>
+    <ul>
+        <li>
+            <code>$this->templateVariableContainer</code> and <code>$this->viewHelperVariableContainer</code> were
+            deprecated and have been removed. You can access them both <code>$this->renderingContext</code>.
+        </li>
+        <li>There is no more <code>ViewHelperNode</code> and <code>$this->viewHelperNode</code> no longer exists.</li>
+        <li>
+            <code>$this->childNodes</code> no longer exists. <code>$this->children</code> and the public getter
+            <code>$this->getChildren()</code> are added as replacements (and return a different interface since
+            the NodeInterface is also removed).
+        </li>
+        <li>
+            The <code>postParseEvent</code> method is removed, but has two replacement methods for "open" and "close".
+        </li>
+        <li>The <code>compile()</code> method is removed and has no replacement.</li>
+    </ul>
+
+    <h2>Arguments</h2>
+    <div class="alert alert-danger">
+        <h4>Breaking change</h4>
+        <p>
+            The <code>$this->arguments</code> property in ViewHelpers is no longer a standard array - it is an
+            ArrayObject. This means that passing <code>$this->arguments</code> to other functions that demand an
+            array will break in Fluid 3.0. To work around this, pass <code>$this->arguments->getArrayCopy()</code>.
+        </p>
+    </div>
+    <p>
+        Although <code>$this->arguments</code> is no longer a raw array, it can still be accessed as if it were an
+        array. Contrary to earlier versions, <strong>an argument is not evaluated until it is accessed</strong> -
+        for example:
+    </p>
+    <pre class="fluid"><f:if condition="{check}" then="{my:expensive()}" else="{my:alsoExpensive()}" /></pre>
+    <p>
+        In earlier versions this would evaluate both <code>{my:expensive()}</code> <strong>and</strong>
+        <code>{my:alsoExpensive()}</code> because earlier versions needed to construct and evaluate the entire array
+        of arguments.
+    </p>
+    <p>
+        In the new version this happens deferred; until you access a property e.g. <code>$this->arguments['foo']</code>
+        the property remains un-evaluated. Therefore when for example <code><f:if /></code> has both the <code>then</code>
+        and <code>else</code> arguments, the ViewHelper only needs to evaluate one of them depending on the condition.
+    </p>
+    <h3>Increased argument introspection</h3>
+    <p>
+        An additional difference compared to earlier Fluid versions is that the <code>ArgumentDefinition</code> formerly
+        held in the ViewHelper itself, has been moved to the <code>ArgumentCollection</code> that exists in
+        <code>$this->arguments</code>. That means that not only can you access the argument declarations internally -
+        you can also access them from objects returned from the template parser, from sections, etc.
+    </p>
+    <p>
+        Consider the following example:
+    </p>
+    <pre class="php">$context = new RenderingContext();
+$template = $context->getTemplateParser()->parseFile('/path/to/file.html');
+// Retrieving an associative array of all ArgumentDefinitions declared with <f:parameter /> in template file
+$parameters = $template->getArguments();
+$definitions = $parameters->getDefinitions();
+
+// We can now manipulate the arguments:
+if (isset($definitions['foo']) && $definitions['foo']->getType() === 'string') {
+    $parameters['foo'] = 'New value of foo';
+} else {
+    $parameters['foo'] = 123;
+}
+
+// And validate that all required arguments exist:
+$parameters->validate();
+
+// Before we render the file we parsed:
+echo $template->evaluate($context);</pre>
+    <p>
+        In fact, assigning arguments for a template or section before rendering it works exactly the same as assigning
+        arguments to a ViewHelper before rendering it:
+    </p>
+    <pre class="php">$context = new RenderingContext();
+$printfViewHelper = $context->getViewHelperResolver()->createViewHelperInstance('f', 'format.printf');
+$printfViewHelper->getArguments()->assignAll(['subject' => 'My %s string', 'arguments' => ['foo']]);
+echo $printfViewHelper->evaluate($context);</pre>
+    <p>
+        An argument assigned to a template becomes a template variable when that template is rendered. This is different
+        from ViewHelpers which do not automatically assign their arguments as template variables but instead holds them
+        internally and expects you to use them and return/assign as necessary.
+    </p>
+    <div class="alert alert-info">
+        <h4>Hint</h4>
+        <p>
+            When calling <code>$instance->getArguments()</code> you receive an object reference which means that you
+            can assign your arguments <i>and not have to worry about passing them back to the instance</i>. Assigning
+            arguments in the returned object mutates the arguments object held by the instance.
+        </p>
+    </div>
+
+    <h2>Opting out of the base ViewHelper class</h2>
+    <p>
+        ViewHelpers are merely a specific type of Component. The difference between a ViewHelper and any other type of
+        Component is the utility methods that the base ViewHelper class provides. However, these utility methods are so
+        simple in nature and contain no business logic that you cannot easily reproduce, you can actually opt out from
+        even using the base ViewHelper class and handle it all manually. There's very little difference to be aware of:
+    </p>
+    <ul>
+        <li>
+            If your ViewHelper needs no arguments simply extend <code>AbstractComponent</code> and override the
+            <code>evaluate()</code> method which gives you a <code>RenderingContext</code> instance as argument.
+        </li>
+        <li>
+            Should your ViewHelper need one or more arguments, another difference is that <code>initializeArguments</code>
+            is no longer called automatically. This can be addressed with an override of <code>getArguments()</code>.
+        </li>
+    </ul>
+    <p>Consider the following example:</p>
+    <pre class="php">class MyViewHelper extends AbstractComponent
+{
+    public function getArguments(): ArgumentCollection
+    {
+        if ($this->arguments === null) {
+            // We now initialize our arguments and add our definitions
+            $this->arguments = (new ArgumentCollection())
+                ->addDefinition(new ArgumentDefinition('name', 'string', 'Employee name', true))
+                ->addDefinition(new ArgumentDefinition('title', 'string', 'Job title', false));
+        }
+        return $this->arguments;
+    }
+
+    public function evaluate(RenderingContextInterface $context)
+    {
+        // First, arguments must be provided with the $context so when we evaluate them, they return the right values.
+        // Note that getArguments() will only have been called if the ViewHelper was used in a template - standalone
+        // usage needs to call the method. A compatible way is to simply call getArguments() here.
+        $this->getArguments()->setRenderingContext($context);
+
+        $output = 'Name: ' . $arguments['name'];
+        if ($arguments['title']) {
+            $output .= ' (' . $arguments['title'] . ')';
+        }
+        return $output;
+    }
+}
+    </pre>
+    <p>
+        And that is literally all it requires to implement the lightest-weight ViewHelper possible. As such, the
+        ViewHelper base class is provided to make argument registration somewhat easier (no need for the condition)
+        and avoid a single line of code duplication (providing arguments with the rendering context).
+    </p>
+    <p>
+        <i>
+            Note that although argument support is possible on any Component, it has to be engaged manually since
+            indiscriminately doing this in the base Component class negatively affects all other Component types.
+            In theory, <code>$instance->getArguments()->setRenderingContext($context)</code> could be called by the
+            code that evaluates Components, but doing so drastically decreases performance and increases memory usage.
+            Therefore, it remains opt-in (and does not need to be touched in ViewHelpers that don't use arguments).
+        </i>
+    </p>
+
+    <h2>Arbitrary and namespace-prefixed argument support</h2>
+    <p>
+        Another thing that has been redesigned is the "additional arguments" concept. Although arbitrary arguments never
+        completely worked in earlier Fluid versions (they required an uncompilable ViewHelper, e.g. a TagBasedViewHelper)
+        they are still possible in 3.0 - but in an improved way.
+    </p>
+    <p>
+        Your ViewHelper class only needs to implement one method:
+    </p>
+    <pre class="php">public function allowUndeclaredArgument(string $argumentName): bool;</pre>
+    <p>
+        Within this method you can perform necessary checks on <code>$argumentName</code> as well as access
+        <code>$this->arguments</code> to compare the argument against known definitions. The method must return true
+        if the argument is allowed. <strong>Returning false, as is the default behavior, makes the Fluid parser break
+        with a parsing error indicating an invalid argument</strong>.
+    </p>
+    <h3>Namespace-prefixed arguments</h3>
+    <p>
+        As a completely new feature Fluid 3.0 supports defining and passing arguments as namespace-prefixed tag
+        attributes. Although this only works in tag syntax (not possible to define in inline syntax) it has some
+        nice benefits when combined with the <code>allowUndeclaredArgument</code> method. Together, they can for
+        example allow your ViewHelper to receive arbitrary arguments - but only when they are prefixed with a namespace.
+    </p>
+    <p>Consider the following example:</p>
+    <pre class="fluid"><my:outputsTag my:arbitraryArgument="foo" my:anotherArbitrary="bar" /></pre>
+    <p>
+        Makes the <code>OutputsTagViewHelper->allowUndeclaredArgument</code> be called with <code>"my:abitraryArgument"</code>
+        and <code>"my:anotherArbitrary"</code> as arguments, respectively. Your method can then
+        <code>return strncmp('my:', $argumentName, 3) === 0</code> which would allow any arbitrary argument as long as
+        it has the <code>my:</code> prefix.
+    </p>
+    <p>
+        For example, the <code>AbstractTagBasedViewHelper</code> provided in Fluid uses this to allow arbitrary
+        <code>data-</code> prefixed attributes.
+    </p>
+    <div class="alert alert-info">
+        <h4>Hint</h4>
+        <p>
+            There are several ways you could keep track of precisely which arbitrary arguments your ViewHelper has
+            allowed. One way is to assign a property in the class itself - since your class no longer gets rendered
+            statically. Another is to loop through the arguments and for each argument name, call <code>allowUndeclaredArgument</code>
+            which will return true if the argument is an arbitrary one, meaning it has no ArgumentDefinition.
+        </p>
+    </div>
+
+    <h2>Concerning compiling and performance</h2>
+    <p>
+        Writing a well-performing ViewHelper was relatively complex in Fluid 2.x and had several strategies, each
+        with increasing performance once a template was compiled. But in Fluid 3.0 there is no compiling step -
+        templates are parsed once per request (unless forced to parse every time it is rendered, which is also
+        possible to do) and will only be executed in one way: by calling <code>evaluate($renderingContext)</code>.
+    </p>
+    <p>
+        This means that the recommended solution from Fluid 2.x - implementing <code>renderStatic()</code> - is no
+        longer the ideal solution in Fluid 3.0. Because the template is no longer compiled, calling the ViewHelper
+        as static only introduces overhead. In Fluid 2.0 this was different because once compiled, the template
+        was represented as a PHP class where calling a static method was very efficient.
+    </p>
+    <p class="lead">
+        The new best practice is to either implement <code>render()</code> or override <code>evaluate()</code> on
+        your ViewHelper class. The former means the ViewHelper base class handles most of the initialisation (e.g.
+        adds the rendering context as property) but the latter reduces memory usage by providing you only with an
+        instance of RenderingContext inside a ViewHelper instance that's blank <strong>except for arguments</strong>.
+    </p>
+    <p>
+        In order to preserve a reasonable degree of compatibility with Fluid 2.x ViewHelper classes, the default
+        base class provides some methods that support <code>render()</code> and <code>renderStatic()</code> methods
+        if your ViewHelper does not implement <code>evaluate()</code>.
+    </p>
+</f:section>

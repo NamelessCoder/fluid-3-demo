@@ -1,0 +1,190 @@
+<demo:frame.default />
+
+<f:description>
+    Explains the differences in parsing compared to earlier versions, and explains some of the new supports that
+    have been added to make especially inline syntax easier to use.
+</f:description>
+
+<f:example title="Plain rendering">
+    <demo:parsing />
+</f:example>
+
+<f:section name="main">
+    <f:description>
+        The "main" section of <demo:parsing />, rendered from the layout-like atom <demo:frame.default />
+    </f:description>
+    <div class="jumbotron bg-dark text-white">
+        <h2>Fully Rewritten Parsing</h2>
+        <p class="lead">
+            The Fluid parser - rewritten from the bottom up - enables a lot of new syntax.
+        </p>
+    </div>
+    <div class="alert alert-danger">
+        <h2>Breaking Changes Ahead!</h2>
+        <p>
+            The old template parsing business logic has been completely removed in Fluid 3.0. Whereas the old parsing
+            engine was sensitive to <strong>nesting and quoting</strong>, the new parsing engine is not. The new engine
+            is sensitive to <strong>sequence</strong>.
+        </p>
+        <p class="lead">
+            This has one extremely important effect:
+        </p>
+        <p>
+            In old versions of Fluid you could intentionally break the nesting of for example inline syntax in order to
+            force the Fluid parser to not detect your code as Fluid. For example this could be done with
+            <code><f:format.raw>{</f:format.raw></code> to "hide" the opening curly
+            brace and prevent Fluid from seeing it as inline syntax.
+        </p>
+        <p>
+            But in Fluid 3.0 this specific workaround causes an error, because Fluid sees the opening curly brace as
+            intentional start of an inline syntax inside a ViewHelper - and so it fails because the inline syntax is
+            not closed and not valid.
+        </p>
+        <p class="lead">
+            Most use cases can simply remove the ViewHelper around the brace.
+        </p>
+        <p>
+            Luckily (actually, fully by intention) Fluid 3.0 is also much less prone to accidentally parsing things like
+            JSON as if it were Fluid. Because of this, almost all use cases can simply remove the surrounding ViewHelper
+            and let the unbroken JSON or whichever expression appear unmodified.
+        </p>
+    </div>
+
+    <a id="escaping"></a>
+    <h3>Escaping of quotes no longer matters</h3>
+    <p>
+        Since Fluid 3.0 is exclusively sensitive to <strong>sequence</strong> of code in the template, it is no longer
+        necessary to add backslashes in front of nested quotes. Still supported, but no longer necessary.
+    </p>
+    <p class="lead">Consider the following example:</p>
+    <pre class="fluid">{f:render(
+    partial: 'Partial',
+    arguments: '{
+        foo: \'{f:render(
+            partial: \\'Another\\',
+            arguments: {
+                bar: \\'{f:format.htmlentities(value: \\\'My string\\\')}\\'
+            }
+        )}\'
+    }'
+)}
+</pre>
+    <p>The escaping is no longer necessary, even though quote types are the same:</p>
+    <pre class="fluid">{f:render(
+    partial: 'Partial',
+    arguments: '{
+        foo: '{f:render(
+            partial: 'Another',
+            arguments: {
+                bar: '{f:format.htmlentities(value: 'My string')}'
+            }
+        )}'
+    }'
+)}
+</pre>
+    <p>In fact, the quotes are no longer necessary either (except around the explicit string!):</p>
+    <pre class="fluid">{f:render(
+    arguments: {
+        partial: 'Partial',
+        foo: {f:render(
+            partial: 'Another',
+            arguments: {
+                bar: {f:format.htmlentities(value: 'My string')}
+            }
+        )}
+    }
+)}
+</pre>
+    <p>
+        The only thing that matters in Fluid 3.0 is that <strong>quote pairs are the same type</strong>. In other words
+        you can only close a single-quoted string with a single-quote.
+    </p>
+
+    <h2>Recursive variable access syntax</h2>
+    <p class="lead">
+        You can now use any nested inline syntax as part of a variable's name.
+    </p>
+    <pre class="fluid">{{dynamicVariableName}}</pre>
+    <pre class="fluid">{array.{dynamicKey}}</pre>
+    <pre class="fluid">{array.{maybeString as int}}</pre>
+    <pre class="fluid">{array.{dynamicKey1}.{dynamicKey2}}</pre>
+    <pre class="fluid">{array.{arrayOfKeys.{whichKey}}}</pre>
+    <pre class="fluid">{array.{my:selectRandomKey(array: array)}}</pre>
+    <pre class="fluid">{array.{array | my:selectRandomKey()}}</pre>
+    <p>
+        Each nested inline syntax is evaluated from the inside out which finally results in a pure string dotted-path
+        or plain variable name, which is then resolved from the assigned template variables.
+    </p>
+    <p>
+        The main difference compared to earlier versions of Fluid: you can use <strong>any</strong> inline syntax,
+        including ViewHelpers, as part of the variable name. You are no longer restricted to only being able to use raw
+        variable names as nested name parts.
+    </p>
+
+    <h2>Aliased short-hand ViewHelpers</h2>
+    <p class="lead">ViewHelpers can now be registered with an alias, with two major benefits as consequence.</p>
+    <ol>
+        <li>
+            A ViewHelper which is aliased can be called with <code>{variable | alias}</code>
+            as alternative to <code>{variable | my:special.format()}</code>.
+        </li>
+        <li>
+            A ViewHelper which is aliased can also transparently take over rendering of standard (X)HTML tags, turning
+            each instance of for example an <code>&lt;img/&gt;</code> into a ViewHelper, which
+            can process arguments to generate any output to replace the standard tag.
+        </li>
+    </ol>
+    <p>
+        The first allows a shorter version of inline syntax. The second has a seriously flexible impact in that any
+        ViewHelper can be registered to handle any (X)HTML tag and perform a special rendering. It is used in Fluid to
+        support <code>xmlns:foo</code> attributes on <code>&lt;html&gt;</code> tag, and allows
+        the ViewHelper to determine if the actual tag should be rendered, if some attributes should not be rendered, and
+        so on.
+    </p>
+
+    <h2>Disable Fluid syntax inside tag</h2>
+    <p class="lead">
+        Fluid is entirely without regular expressions. It is instead <strong>context aware</strong> and allows third
+        party developers to completely change how Fluid detects Fluid syntax inside custom tags.
+    </p>
+    <pre class="fluid">Anything inside the next block is not parsed as Fluid
+
+<f:passthrough>
+    {var} isn't detected as variable.
+    <f:format.raw>{var}</f:format.raw> is output as entire string (escaped by default).
+</f:passthrough></pre>
+    <p>
+        This strategy (and <code></code>) is used extensively in this demo site to produce all the Fluid
+        code examples without parsing them as Fluid and without requiring any effort in escaping Fluid syntax. It is
+        also used for:
+    </p>
+    <ul>
+        <li>
+            Embedding usage examples with <code><f:example title="My example">Anything goes in here,
+            including invalid Fluid syntax</f:example></code>.
+        </li>
+        <li>
+            Embedding descriptions with <code><f:description>A very thorough and not-parsed
+            description</f:description></code>.
+        </li>
+        <li>
+            Preventing anything inside <code><f:comment>Unparsed</f:comment></code> from
+            being parsed, which allows you to <strong>truly comment-out Fluid code you do not want to render</strong>.
+        </li>
+    </ul>
+    <p>
+        All of these parsing-manipulation features are based on delegating the parsing to the ViewHelper associated with
+        the opening tag. The ViewHelper is then completely responsible for how the parsing continues, and can change any
+        symbol that causes a return from the parser. The most frequent use case is to disable all parsing and then "do
+        something" with the unparsed result - return it, process it, ignore it, etc. - and this is possible with an API
+        method that grabs everything as a string until a same-level closing tag is encountered.
+    </p>
+    <div class="alert alert-warning">
+    <h4>Important!</h4>
+    <p>
+        Parsing-manipulating ViewHelpers only work when used in tag mode with an opening and closing tag. No other
+        use case is relevant since no other use case is capable of containing any body that should be parsed in a
+        different way, or not parsed at all.
+    </p>
+    </div>
+</f:section>

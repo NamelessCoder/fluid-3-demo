@@ -1,0 +1,121 @@
+<demo:frame.default />
+
+<f:description>
+    Documents a single Component - usually Atom or ViewHelper
+
+    Renders description, arguments, examples and sections for the Component.
+</f:description>
+
+<f:example title="Standard usage">
+    <demo:atom atom="{atom}" />
+</f:example>
+
+<f:section name="main">
+    <f:parameter name="atom" type="NamelessCoder\Fluid3Demo\Introspection" description="An instance of the Introspection from this demo package" required="1" />
+    <div class="jumbotron">
+        <h2>
+            Documentation:
+            <f:if condition="{atom.parent}">
+                <f:then>
+                    <i>Section</i>
+                    <a href="{atom.url}">
+                        {atom.name}
+                    </a>
+                    <i>in</i>
+                    <a href="{atom.parent.url}">
+                        {atom.namespace}:{atom.parent.name}
+                    </a>
+                </f:then>
+                <f:else>
+                    <a href="{atom.url}">
+                        {atom.path}
+                    </a>
+                </f:else>
+            </f:if>
+        </h2>
+        <p>
+            This view shows a single Component's description, arguments, examples and any nested sections. Click the name
+            of a section to show the corresponding documentation for that section.
+        </p>
+        <a class="float-right" href="?view=doc">Back to list</a>
+    </div>
+    <f:if condition="{atom.transparent}">
+        <div class="alert alert-success">
+            <h4>Transparent</h4>
+            <p>
+                This Component allows <code>getNamedChild()</code> and <code>getTypedChildren()</code> to recurse to
+                children of this Component in a transparent manner. Normally you can only get first-level children
+                with these methods, but when a child is marked as transparent it allows the lookup to also consider the
+                first-level children of the transparent Component.
+            </p>
+        </div>
+    </f:if>
+    <f:if condition="{atom.embedded}">
+        <div class="alert alert-primary">
+            <h4>Embedded</h4>
+            <p>
+                This Component is an embedded component, meaning it does not output content when rendering the parent.
+                The Component can only be rendered if created as separate instance or if resolved through a parent.
+                <strong>If the Component is an Atom, using it in Fluid will render it although the Atom itself
+                technically is an embedded Component!</strong>
+            </p>
+            <p>
+                The Component may also only have an effect when used inside a specific type of parent Component (when
+                the parent Component is capable of harvesting embedded Components from its children).
+            </p>
+        </div>
+    </f:if>
+    <f:if condition="{atom.sequencing}">
+        <div class="alert alert-warning">
+            <h4>Sequencing Switcher</h4>
+            <p>
+                This Component takes over parsing of Fluid templates. When used in tag syntax and with opening and
+                closing tag, contents of the tag may not be parsed as Fluid normally would. Most implementations will
+                completely ignore any Fluid in tag contents - except for the closing tag that ends the Component.
+            </p>
+        </div>
+    </f:if>
+    <h5>Description</h5>
+    <f:if condition="{atom.description}">
+        <f:then>
+            <pre content="{atom.description}"></pre>
+        </f:then>
+        <f:else>
+            <p>This Atom has no embedded description</p>
+        </f:else>
+    </f:if>
+    <h5>Arguments</h5>
+    <f:if condition="{atom.parameters}">
+        <f:else>
+            <p>This Atom has no embedded parameters</p>
+        </f:else>
+        <f:then>
+            <ul>
+                <f:for each="{atom.parameters}" as="argument">
+                    <li>
+                        <h5>
+                            <strong>{argument.name}</strong>
+                            <f:if condition="{argument.required}" then="(required)" />
+                        </h5>
+                        <p>{argument.description}</p>
+                    </li>
+                </f:for>
+            </ul>
+        </f:then>
+    </f:if>
+    <h5>Examples</h5>
+    <f:if condition="{atom.examples}">
+        <f:else>
+            <p>This Atom has no embedded examples</p>
+        </f:else>
+        <f:then>
+            <f:for each="{atom.examples}" as="example" key="title">
+                <h6>{title}</h6>
+                <pre class="fluid" content="{example}"></pre>
+            </f:for>
+        </f:then>
+    </f:if>
+    <f:if condition="{atom.sections}">
+        <demo:list.components components="{atom.sections}" prefix="Section: " />
+    </f:if>
+</f:section>

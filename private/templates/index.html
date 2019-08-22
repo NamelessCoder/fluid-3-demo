@@ -1,0 +1,114 @@
+<demo:frame.default />
+
+<f:section name="main">
+    <f:passthrough escape="0">
+        <div class="jumbotron bg-dark text-white">
+            <h2>Welcome to the Fluid 3.0 demonstration</h2>
+            <p class="lead">
+                This mini-site demonstrates new features of Fluid 3.0.
+            </p>
+        </div>
+
+        <h2>About this site and source</h2>
+        <p>
+            This demo package serves two purposes:
+        </p>
+        <ol>
+            <li>It can be rendered as a site (what you're viewing now, most likely)</li>
+            <li>Its source files can be studied and contains plenty comments that explain how to use new features.</li>
+        </ol>
+        <p>
+            The site is therefore only part of the whole - studying the template files and index.php is equally recommended.
+        </p>
+
+        <h2>Inventory</h2>
+        <p>
+            The site is divided into dedicated sections that go in depth with one topic.
+        </p>
+
+        <div class="alert alert-primary">
+            <h4>Vocabulary</h4>
+            <p>
+                Explains the new terms used to describe various parts of Fluid.
+            </p>
+            <p>
+                <a href="?view=vocabulary">View the Vocabulary section</a>.
+            </p>
+        </div>
+
+        <div class="alert alert-primary">
+            <h4>Atoms</h4>
+            <p>
+                Atoms are a new feature in Fluid 3.0 which allows your template files to:
+            </p>
+            <ul>
+                <li>Become contained within a namespace, like ViewHelpers</li>
+                <li>Define parameters, like ViewHelpers</li>
+                <li>Embed various documentation and examples within the template file itself</li>
+            </ul>
+            <p>
+                <a href="?view=atoms">View the Atoms feature section</a>.
+            </p>
+        </div>
+
+        <div class="alert alert-primary">
+            <h4>Expressions</h4>
+            <p>
+                Though also (partially) possible in Fluid 2.x and earlier, expressions have been improved in Fluid 3.0
+                and now allow any ViewHelper to also work as an expression. In Fluid, an expression is "inline syntax
+                that is neither a variable or ViewHelper" - for example, <code>{check ? thenVar : elseVar}</code> is
+                a ternary expression and is handled by the standard IfViewHelper.
+            </p>
+            <p>
+                <a href="?view=expressions">View the Expressions feature section</a>.
+            </p>
+        </div>
+
+        <div class="alert alert-primary">
+            <h4>Parsing</h4>
+            <p>
+                Several new abilities have been added to the parsing layer of Fluid - this section describes some of the
+                new features, explains up-coming breaking changes and the reason behind them, and provides alternative ways
+                to achieve compatibility in templates.
+            </p>
+            <p>
+                <a href="?view=parsing">View the Parsing feature section</a>.
+            </p>
+        </div>
+
+        <div class="alert alert-primary">
+            <h4>ViewHelpers</h4>
+            <p>
+                Explains new practices and API, new abilities and changes (breaking and otherwise) to the API used inside
+                ViewHelpers. Explains how the compilation of templates is now removed and how ViewHelpers are rendered in
+                a universal context - that there's no more difference between static and non-static rendering and how the
+                ViewHelper instance always has access to child nodes, argument manipulation, node substitution and more.
+            </p>
+            <p>
+                <a href="?view=viewhelpers">View the ViewHelpers section</a>.
+            </p>
+        </div>
+
+        <div class="alert alert-primary">
+            <h4>PHP API</h4>
+            <p>
+                Details about the PHP side of Fluid's API - how to extract components from templates, how to render Fluid
+                components (templates, sections, ViewHelpers) and how to use the new template registration functions.
+            </p>
+            <p>
+                <a href="?view=php">View the PHP API section</a>.
+            </p>
+        </div>
+
+        <div class="alert alert-primary">
+            <h4>Documentation</h4>
+            <p>
+                A demonstration of how documentation embedded in Fluid templates or even sections can be rendered to
+                generate a manual-type reference for all arguments, with examples/description.
+            </p>
+            <p>
+                <a href="?view=doc">View the documentation section</a>.
+            </p>
+        </div>
+    </f:passthrough>
+</f:section>

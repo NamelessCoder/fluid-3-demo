@@ -1,0 +1,263 @@
+<demo:frame.default />
+
+<f:description>
+    This is a description
+</f:description>
+
+<f:example title="Foobar test">
+    Example: <f:invalid />
+</f:example>
+
+<f:section name="main">
+    <div class="jumbotron bg-dark text-white">
+        <h2>Expressions</h2>
+        <p class="lead">
+            Fluid 3.0 adds new ways to write Fluid.
+        </p>
+    </div>
+
+    <h2>ViewHelpers masquerade as Expressions</h2>
+    <p>
+        Fluid ships with a couple of built-in expressions and allows any third-party ViewHelper to also work as
+        expressions. The ones that ship with Fluid are:
+    </p>
+    <ol>
+        <li>Ternary conditions: <code><f:passthrough>{check ? thenVar : elseVar}</f:passthrough></code></li>
+        <li>Type casting: <code><f:passthrough>{variable as string}</f:passthrough></code></li>
+        <li>Math: <code><f:passthrough>{number + 1}</f:passthrough></code></li>
+    </ol>
+    <p>
+        Each is also a ViewHelper (which allows more complex usage and additional arguments):
+    </p>
+    <ol>
+        <li>Ternary is IfViewHelper: <code><f:passthrough><f:if condition="{check}" then="{thenVar}" else="{elseVar}" /></f:passthrough></code></li>
+        <li>Type casting is CastViewHelper: <code><f:passthrough><f:expression.cast subject="{variable}" as="string" /></f:passthrough></code></li>
+        <li>Math is MathViewHelper: <code><f:passthrough><f:expression.math a="{number}" operator="+" b="1" /></f:passthrough></code></li>
+    </ol>
+    <p>
+        This is achieved by implementing <code>ExpressionComponentInterface</code> which requires a couple of consistent
+        methods on your ViewHelper class in addition to current required methods like <code>evaluate()</code>:
+    </p>
+    <ul>
+        <li>An additional <i>static</i> method <code>matches(iterable $parts)</code> must be implemented.</li>
+        <li>The constructor must receive an <code>iterable $parts</code>.</li>
+    </ul>
+    <p>
+        Together these methods allow your ViewHelper to first respond if it matches a given set of expression parts (which
+        are separated by Fluid using inline tokens such as whitespaces), and then evaluate itself based on these parts
+        rather than any input arguments.
+    </p>
+    <div class="alert alert-info">
+        <h4>Hint</h4>
+        <p>
+            Study the above mentioned three ViewHelpers for reference. Essentially, the <code>matches()</code> method
+            should use an absolute minimum and best performing way to match parts - and the <code>evaluate</code> method
+            should contain a condition that makes it either grab argument values from parts and then evaluate arguments
+            as usual, or perform a special rendering if parts were used instead of arguments.
+        </p>
+    </div>
+
+    <h2>Arrays</h2>
+    <p>
+        Fluid's handling of array syntax, being part of the TemplateParser, has also been completely rewritten. It now
+        supports, in addition to existing syntax:
+    </p>
+    <ul>
+        <li>ECMA literal shorthand</li>
+        <li>Numeric arrays without keys</li>
+        <li>Passing arrays as child content for ViewHelpers</li>
+    </ul>
+    <p>
+        Consider the following example:
+    </p>
+    <pre class="fluid"><f:render section="Foo" arguments="{foo, bar, baz}" />
+<!-- ...is equivalent to -->
+<f:render section="Foo" arguments="{foo: foo, bar: bar, baz: baz}" />
+
+<f:render section="Foo" arguments="[one, two]" />
+<!-- ...is equivalent to -->
+<f:render section="Foo" arguments="{0: one, 1: two}" />
+
+{my:arrayAction(array: {foo, bar, baz})}
+<!-- ...is equivalent to -->
+{{foo, bar, baz} | my:arrayAction()}
+</pre>
+    <p>
+        The latter example of course only works if <code>ArrayActionViewHelper</code> is capable of using either an
+        argument or child content as input argument.
+    </p>
+
+    <h2>Truly dynamic variable access</h2>
+    <p>
+        A semi-frequent use case in Fluid is to output a variable which has one or more parts of the variable name coming
+        from other variables - for example, <code>{array.{dynamicKey}}</code>. Where older versions of Fluid had several
+        restrictions, among other things that <i>only pure variable names could be used in the nested brackets</i>, the
+        new version has no such restrictions. Whatsoever.
+    </p>
+    <p>
+        This means among other things that the following is possible:
+    </p>
+    <pre class="fluid">
+<!-- useful for things like pagination, showing next/next-two/next-X elements -->
+{array.{index + 1}}
+{array.{index + 1}.{subIndex as string}}
+{array.{my:randomIndex()}}
+
+<!-- to any depth: for example, equivalent of $array[$keyPrefix . $keySuffix][$item] in PHP -->
+{array.{keyPrefix}{keySuffix}.{item}}
+
+<!-- assuming {variableFoo} and {variableBar} and you want "Foo" or "Bar" added randomly -->
+{variable{my:randomSuffix()}
+
+<!-- also when passing to ViewHelpers -->
+{array.{index} | f:format.raw()}
+    </pre>
+    <p>
+        In short: anything that works in inline syntax can also be used as part of an expression, to infinite depth,
+        with any number of expressions at the same nesting level. <i>In earlier versions none of this was possible</i>.
+    </p>
+
+    <h2>Pipes and Aliased ViewHelpers</h2>
+    <p>
+        Inline Fluid syntax can quickly become complicated. Many of the new syntax features deal specifically with making
+        this type of Fluid syntax more easy to write. One of the changes is that ViewHelpers can be registered as an alias
+        which requires no namespace or parenthesis, but supports no arguments, when used in inline syntax. An additional
+        change is that the <code>-></code> pass operator has been deprecated in favor of the pipe character <code>|</code>.
+        There are two main reasons for this - one, a single byte is much easier to handle in the rewritten parser, and
+        two, using the pipe character to "pass value to X" is a known convention not just from CLI but other template
+        languages as well.
+    </p>
+    <p>
+        Consider the following quite frequently encountered use case:
+    </p>
+    <pre class="fluid">{myVariableWithHtml -> f:format.raw()}</pre>
+    <p>
+        Which can now be written as:
+    </p>
+    <pre class="fluid">{myVariableWithHtml | raw}
+<!-- OR -->
+<raw>{myVariableWithHtml}</raw></pre>
+    <p>
+        Because <code><f:format.raw /></code> is registered with an alias <code>raw</code>.
+    </p>
+    <h5>Sub-feature of aliases: XHTML tag replacement</h5>
+    <p>
+        As you may already have deduced: when a ViewHelper is registered as alias this causes the alias name to also
+        work as tag name. In the example above we used <code><raw>{var}</raw></code> to demonstrate. Other use cases
+        could be:
+    </p>
+    <ul>
+        <li>
+            Registering a PHP class to handle all <code><img /></code> tags, converting them to responsive images using
+            context-stored settings for resolution etc.
+        </li>
+        <li>
+            Handling <code><body /></code> tag with a ViewHelper to add classes, or handling <code><head /></code> to
+            add header code without needing to write it into the Fluid template.
+        </li>
+        <li>
+            Handling <code><section>content</section></code> to make sections possible to extract and render individually.
+        </li>
+        <li>
+            And much, much more that I never imagined.
+        </li>
+    </ul>
+    <h5>Note about namespace extraction</h5>
+    <p>
+        The ViewHelper aliasing as XHTML tag is used by Fluid 3.0 to process <code><html /></code> tags to extract
+        namespaces and make the decision whether or not to even render the tag based on the <code>data-namespace-typo3-fluid</code>
+        attribute's value.
+    </p>
+    <div class="alert alert-danger">
+        <h5>Breaking change</h5>
+        <p>
+            This means that <code>xmlns:foo</code> attributes only get extracted as namespaces from your templates
+            <strong>if you put them on an <code><html /></code> tag</strong>. Use cases have been observed in the wild
+            where other tags, e.g. <code><div /></code>, have been used - and these will break in Fluid 3.0. Changing
+            to a <code><html /></code> tag should be easy enough though, and is still compatible with older versions.
+        </p>
+    </div>
+
+    <h2>Escaping</h2>
+    <p class="lead">
+        Another difficult syntax aspect of earlier Fluid versions is the need to escape quotes when they appear inside
+        quoted strings, which frequently happens if you need to use a ViewHelper to generate an argument's value in
+        inline Fluid syntax.
+    </p>
+    <h3>Quote escaping in strings</h3>
+    <p>
+        This removed constraint is explained in more detail in the <a href="?view=parsing#escaping">new parser features</a>
+        section so it will not be covered here. The following explains other ways that Fluid code can be escaped.
+    </p>
+    <h3>"Do not parse as Fluid" escaping</h3>
+    <p>
+        Another very frequently seen use case is the need to embed things like JS/JSON or CSS in template files. Such
+        syntax has historically been easy for Fluid to confuse with intended Fluid expressions because of the similarity
+        in using curly braces and colons in much the same way as Fluid.
+    </p>
+    <p>
+        Even though Fluid 3.0 is drastically improved in this regard and will more predictably ignore curly-braces type
+        expressions like JS/CSS you may still encounter use cases where you need to escape an expression so it won't be
+        detected and processed as Fluid code. Several tools exist to solve this:
+    </p>
+    <ul>
+        <li>
+            You can use <code><f:passthrough>{code}</f:passthrough></code> which completely disables Fluid parsing and
+            outputs whatever tag contents are, as raw text.
+        </li>
+        <li>
+            Or you can use <code>\{ignored}</code> to cause an entire inline expression and all nested parts to be ignored.
+        </li>
+        <li>
+            Or you can use <code>{@parsing off}</code> to disable parsing of an entire file.
+        </li>
+    </ul>
+    <p>
+        If and when you may need to use Fluid variables or ViewHelpers inside a JS or CSS block there is also a way:
+    </p>
+    <pre class="fluid"><!--
+    normally, everything inside the body definition is ignored by Fluid, but we can use backtick quoting to
+    force parsing of the content within the backtick quotes:
+-->
+<style type="text/css">
+    body {
+        margin: 2em;
+        font-size: `{fontSize}`pt;
+    }
+</style></pre>
+    <p>
+        These tools together allow you to control Fluid's parsing by disabling or forcing it whenever necessary.
+    </p>
+    <h3>Feature toggles</h3>
+    <p>
+        Although feature toggles were also (partially) known in earlier Fluid versions - for example as
+        <code>{parsing off}</code> - the recognition of such expressions has been changed slightly. The most important
+        change is that such expressions must now be written as <code>{@parsing off}</code> (with an at-sign prefix) in
+        order to be detected correctly.
+    </p>
+    <div class="alert alert-warning">
+        <h4>Namespace registration affected</h4>
+        <p>
+            This change also affects the <code>{namespace foo=Bar\Baz\ViewHelpers}</code> syntax is deprecated in favor of
+            <code>{@namespace foo=Bar\Baz\ViewHelpers}</code> but compatibility measures exist until Fluid 4.0 comes out.
+        </p>
+    </div>
+    <p>
+        As a side effect of this it is now possible to <i>invent your own feature toggles for parsing configuration</i>.
+        For example:
+    </p>
+    <pre class="fluid">{@myFeature on}</pre>
+    <p>Would then be possible to read from all subsequent ViewHelpers encountered after this point:</p>
+    <pre class="php">public function evaluate(RenderingContextInterface $context)
+{
+    if ($renderingContext->getParserConfiguration()->isFeatureEnabled('myFeature')) {
+        // Do something when the feature is enabled
+    }
+    return 'Some output';
+}</pre>
+    <p>
+        ...and can also be read from the RenderingContext after a template has been parsed. This can for example allow
+        you to determine if a specific feature was toggled on <i>from within templates</i> and then perform special
+        actions <i>after or even before the template is rendered</i>.
+    </p>
+</f:section>

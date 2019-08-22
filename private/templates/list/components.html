@@ -1,0 +1,38 @@
+<f:parameter name="components" type="iterable" description="A list of Introspection instances to document" required="1" />
+<f:parameter name="prefix" type="string" description="Optional text to render before link" />
+<f:parameter name="badges" type="bool" description="Whether or not to show badges" default="{1 as boolean}" />
+
+<f:example>
+    <demo:list.components components="{components}" />
+</f:example>
+
+<f:example title="Using ECMA literal shorthand style to pass components=$components">
+    <demo:list.components components />
+</f:example>
+
+<ul>
+    <f:for each="{components}" as="component">
+        <li>
+            <h6>
+                {prefix} <a href="{component.url}">{component.path}</a>
+                <f:if condition="{badges}">
+                    <f:if condition="{component.embedded}">
+                        <span class="badge badge-primary">Embedded</span>
+                    </f:if>
+                    <f:if condition="{component.sequencing}">
+                        <span class="badge badge-warning">Sequencing</span>
+                    </f:if>
+                    <f:if condition="{component.transparent}">
+                        <span class="badge badge-success">Transparent</span>
+                    </f:if>
+                    <f:if condition="{component.expression}">
+                        <span class="badge badge-dark">Expression</span>
+                    </f:if>
+                </f:if>
+            </h6>
+            <f:if condition="{component.sections}">
+                <demo:list.components components="{component.sections}" prefix="Section: " />
+            </f:if>
+        </li>
+    </f:for>
+</ul>

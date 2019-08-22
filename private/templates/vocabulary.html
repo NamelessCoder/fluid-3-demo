@@ -1,0 +1,142 @@
+<demo:frame.default />
+
+<f:section name="main">
+    <f:passthrough escape="0">
+        <div class="jumbotron bg-dark text-white">
+            <h2>Fluid's Vocabulary</h2>
+            <p class="lead">
+                New concepts to cover Fluid's new features.
+            </p>
+        </div>
+        <h2>Removed concepts</h2>
+        <p>
+            Fluid 3.0 removes or deprecates several concepts. The terms used for those concepts will no longer be relevant:
+        </p>
+        <ul>
+            <li>We no longer speak of <strong>Layouts</strong>.</li>
+            <li>We no longer speak of <strong>Partials</strong>.</li>
+            <li>A <strong>Template</strong> now refers to any Fluid template file, not a specific category of files.</li>
+            <li><strong>Interceptors</strong> no longer exist and have no replacement.</li>
+            <li><strong>TemplatePreProcessors</strong> no longer exist and have no replacement.</li>
+            <li>A <strong>View</strong> is no longer dictated by Fluid and Fluid has no opinion about View implementation.</li>
+            <li>We no longer have <strong>Compiling</strong> and therefore no <strong>Cache</strong> or <strong>Warmup</strong></li>
+        </ul>
+        <p>
+            These concepts are no longer used when referring to Fluid's features. Other concepts are preserved:
+        </p>
+        <ul>
+            <li>A <strong>ViewHelper</strong> is still referred to as such and has the same (and more) abilities.</li>
+            <li>An <strong>Expression</strong> is still "an inline syntax that's not ViewHelper or variable".</li>
+            <li>
+                We still refer to <strong>Arguments</strong> and <strong>Variables</strong>; though in some contexts they
+                are now one and the same.
+            </li>
+        </ul>
+        <p>
+            And finally some new concepts are introduced which are described in the following sections.
+        </p>
+
+        <h2>Component</h2>
+        <p>
+            <i>A Fluid template's PHP representation consists of Components</i>. A Component is essentially any part of
+            Fluid that can be rendered:
+        </p>
+        <ul>
+            <li>Once parsed a template source's object is a Component</li>
+            <li>Each ViewHelper used in the template is a Component</li>
+            <li>The nodes that represent for example a variable are all Components</li>
+            <li>A section within a template is a Component</li>
+        </ul>
+        <p>
+            And so on. There are then more specific terms to refer to specific types of components.
+        </p>
+
+        <h2>Embedded Component</h2>
+        <p>
+            An <strong>Embedded Component</strong> is a special type of Component which when used in a template file, does
+            not cause any immediate output. Instead, an <strong>Embedded Component</strong> expects to be extracted from
+            the parsed template and either rendered or consumed somehow else, individually and separately from the template.
+        </p>
+        <p>
+            For example, a <strong>Section</strong> in Fluid is represented as an <strong>Embedded Component</strong>. It
+            exists within a template file and is only rendered when extracted and explicitly rendered, for example when
+            <code><f:render /></code> is used to render it.
+        </p>
+        <p>
+            This new concept is essential to Fluid's ability to defer rendering, e.g. through sections, but also for
+            declaring parameters for a template file or section, and for embedding template-documenting text and examples
+            within each Fluid template file.
+        </p>
+
+        <h2>ViewHelper</h2>
+        <p>
+            A ViewHelper is a specialised type of Component which in addition to being a Component that can be rendered and
+            extracted, also contains some utility functions - for compatibility and for supporting most common use cases.
+        </p>
+        <p>
+            A ViewHelper is still a PHP class and still uses the same base class. Fluid continues to refer to this special
+            type of Component as a ViewHelper.
+        </p>
+
+        <h2>Atom</h2>
+        <p>
+            Fluid now uses the term <strong>Atom</strong> to refer to "a Fluid template file, with or without parameters,
+            which can be rendered from within Fluid". As a new feature Fluid allows any Component - which includes the
+            template file itself - to carry parameters just like a ViewHelper does. Along with the support for "calling"
+            template files the same way a ViewHelper is called this means an <strong>Atom</strong> works precisely like
+            ViewHelpers work, except they are based on Fluid files instead of PHP classes.
+        </p>
+
+        <h2>Parameter</h2>
+        <p>
+            The term <strong>Parameter</strong> in Fluid must be seen as different from an <strong>Argument</strong>. In
+            short, a <strong>Parameter</strong> declares which <strong>Argument</strong>s must/can be passed.
+        </p>
+        <p>
+            The distinction is made because <code><f:parameter /></code> now allows parameters to be declared within Fluid
+            templates and this declaration is different in nature from an <strong>Argument</strong> that for example can
+            refer to a tag attribute specified by the user when calling a ViewHelper.
+        </p>
+
+        <h2>Argument</h2>
+        <p>
+            An <strong>Argument</strong> is still the same "thing" in Fluid, except it no longer refers to both the
+            declaration and the user-specified argument used when calling a ViewHelper. The declaration is now referred to
+            as a <strong>Parameter</strong>.
+        </p>
+
+        <h2>ArgumentCollection</h2>
+        <p>
+            The term <strong>ArgumentCollection</strong> is used to refer to a container object that holds <strong>Argument</strong>
+            and <strong>Parameter</strong> (both declaration of, and value of, a given argument) for a Component.
+        </p>
+        <p>
+            The <strong>ArgumentCollection</strong> is responsible for on-demand evaluating any dynamic values (for example,
+            it evaluates ViewHelpers if you used a ViewHelper inline syntax as argument value). It is also responsible for
+            coordinating boolean values (which are both parsed and handled different from other types) with the parser.
+        </p>
+
+        <h2>Variable</h2>
+        <p>
+            A <strong>(Template) Variable</strong> is also still the same, but can now also refer to an <strong>Argument</strong>
+            passed to a template since the <strong>Argument</strong> becomes assigned as a <strong>Variable</strong> when
+            the template file is rendered.
+        </p>
+        <p>
+            <strong>Variables</strong> are still used and assigned the same was as always. The only difference is that
+            <strong>Variables</strong> can be provided for templates as a set of <strong>Arguments</strong>.
+        </p>
+
+        <h2>Sequencer</h2>
+        <p>
+            The <strong>Sequencer</strong> is another new concept. It is a combination of template splitting and recombination
+            into a tree structure - "sequencing" the split template parts. It works by iterating over each byte of a template
+            file and creating the necessary Component instances that become the tree.
+        </p>
+        <p>
+            The <strong>Sequencer</strong> allows delegating this loop and handling of encountered bytes to third party
+            ViewHelpers.
+        </p>
+    </f:passthrough>
+
+</f:section>

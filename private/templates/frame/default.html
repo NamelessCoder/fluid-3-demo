@@ -1,0 +1,78 @@
+<f:description>
+    Frame (Layout) template.
+
+    Is used from within other templates or even sections. When used it causes the nodes of this
+    template file to become imported to the file being rendered. The including file then contains
+    sections that this Atom renders (precisely like Layouts did before version 3.0).
+
+    One thing that this does is allow you to render a "main" section from any other file than the
+    template that used this Atom as Layout, decreasing the need to duplicate code if for example
+    you need to render a list+detail combined view as well and still have each view in a separate
+    template, but without the need to move the reusable code to a partial.
+</f:description>
+
+<f:example>
+    <demo:frame.default />
+    <f:section name="main">
+        Output here rendered by layout-like Atom
+    </f:section>
+</f:example>
+
+<html>
+<head>
+    <title>Fluid 3.0 Demonstration</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="shortcut icon" href="brand.svg">
+    <link rel="stylesheet" href="bootstrap.min.css" />
+    <link rel="stylesheet" href="bootstrap-theme.min.css" />
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+<nav class="navbar navbar-dark navbar-expand-lg bg-dark">
+    <div class="container">
+        <a href="/" class="navbar-brand">
+            <img src="brand.svg" alt="TYPO3 Fluid" height="30" width="30" class="d-inline-block align-top" /> Fluid 3.0 demo
+        </a>
+        <button class="navbar-toggler" type="button" onclick="javascript:document.getElementById('nav-collapse').classList.toggle('show');" data-toggle="collapse" data-target="#nav-collapse" aria-controls="nav-collapse" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="nav-collapse">
+            <nav class="navbar-nav mr-auto">
+                <f:for each="{menu}" as="menuUrl" key="menuLabel">
+                    <a class="nav-link{f:if(condition: '{url} === {menuUrl}', then: ' active')}" href="{menuUrl}">{menuLabel}</a>
+                </f:for>
+            </nav>
+        </div>
+    </div>
+</nav>
+
+<div class="container" id="body">
+    <this:main />
+</div>
+
+<div class="container-fluid">
+    <hr />
+</div>
+
+<footer>
+    <div class="container text-muted">
+        <div class="row">
+            <div class="col-4">
+                <pre class="php">// PHP code</pre>
+            </div>
+            <div class="col-4">
+                <pre class="fluid"><!-- Fluid code --></pre>
+            </div>
+            <div class="col-4">
+                <pre class="output">Output</pre>
+            </div>
+        </div>
+        <h5 class="float-right">Fluid 3.0 Demo site / <a href="https://twitter.com/NamelessCoder/">Claus Due</a></h5>
+        <f:comment>Markers used here to report values that are not available until parsing and execution is done</f:comment>
+        Init: ###inittime###ms, Parsing: ###parsetime###ms, Execution: ###exectime###ms.
+    </div>
+</footer>
+
+</body>
+</html>
