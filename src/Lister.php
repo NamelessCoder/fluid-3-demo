@@ -46,8 +46,8 @@ class Lister
         $viewHelpers = [
             'f' => [
                 'alias', 'case', 'comment', 'count', 'cycle', 'debug', 'defaultCase', 'description', 'else',
-                'example', 'for', 'groupedFor', 'html', 'if', 'inline', 'layout', 'or', 'parameter', 'passthrough',
-                'render', 'section', 'spaceless', 'switch', 'then', 'variable',
+                'example', 'extend', 'for', 'groupedFor', 'html', 'if', 'inline', 'layout', 'or', 'parameter',
+                'passthrough', 'render', 'section', 'spaceless', 'switch', 'then', 'variable',
 
                 'cache.static',
 

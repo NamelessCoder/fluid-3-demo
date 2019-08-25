@@ -1,4 +1,4 @@
-<demo:frame.default />
+<f:extend atom="demo:frame.default" />
 
 <f:description>
     Outputs a list of Atoms.
@@ -56,7 +56,20 @@ You passed foo: {foo}
         <p>
             And will fail unless passed all required arguments - in this case, argument <code>foo</code> must be provided.
         </p>
+
         <h2>Atoms as Layouts</h2>
+        <div class="alert alert-success">
+            <h4>New feature: extending templates</h4>
+            <p>
+                A new feature is added which allows any template file to extend another template file. Extending a file
+                means that <strong>all sections and body from the extended template become part of the template that is
+                extending it</strong>.
+            </p>
+            <p>
+                Among other things this means that you can have default sections in Atoms you use as Layouts, and can
+                make your Layout-like Atoms extend from other templates that extend from others and so on.
+            </p>
+        </div>
         <p>
             Atoms can also be used as Layouts - what an Atom does (which type it is) depends entirely on what the Atom file
             contains. For example, a Partial-style Atom might contain required arguments and have no sections. Whereas a
@@ -74,12 +87,12 @@ You passed foo: {foo}
 </body>
 </html></pre>
         <p>
-            This Atom is then used as Layout simply by including it in the template that should use it as Layout:
+            This Atom is then used as Layout by <strong>extending</strong> the Atom:
         </p>
-        <pre class="fluid"><myns:layout.default />
+        <pre class="fluid"><f:extend atom="myns:layout.default" />
 
 <f:section name="main">
-    This is rendered from the Layout-style Atom because of the pseudo-ViewHelper above
+    This is rendered from the Layout-style Atom because of the pseudo-ViewHelper above.
 </f:section></pre>
         <p>
             And when the file using the Layout-style Atom is rendered, it outputs:
@@ -97,6 +110,83 @@ You passed foo: {foo}
     <p>
         Which means it works precisely the same as Layouts did in earlier versions but requires using the
         namespace-and-tag-name approach instead of <code>f:layout</code> which is now deprecated.
+    </p>
+
+    <h2>Extending Atoms</h2>
+    <p class="lead">
+        Fluid 3.0 allows any template/Atom to extend another (which extends another, which extends another, and so on).
+        This is used among other things as replacement for <code><f:layout /></code> but can be used in any Atom and
+        can extend any other Atom.
+    </p>
+    <p>
+        To extend an Atom is simple:
+    </p>
+    <pre class="fluid"><f:extend atom="myns:some.atom" /></pre>
+    <p>
+        Doing so has the following effect:
+    </p>
+    <ol>
+        <li>
+            Any <code><f:section /> defined in the </code> Atom that gets extended from, become part of the template
+            that extends it.
+        </li>
+        <li>
+            Any embedded documentation from the Atom being extended also becomes part of the template that extends it.
+        </li>
+        <li>
+            Sections and documentation can both be overwritten - all you have to do is declare it <strong>after</strong>
+            the extending is done (local sections overwrite ones from the extended Atom).
+        </li>
+    </ol>
+    <p>Consider the following set of Atoms:</p>
+    <ul>
+        <li><code><my:atom1 /></code> contains sections <code>primary</code> and <code>default</code></li>
+        <li><code><my:atom1 /></code> contains sections <code>primary</code> and <code>default</code></li>
+        <li><code><my:atom2 /></code> contains section <code>secondary</code> and <code>default</code></li>
+    </ul>
+    <p>
+        Then extending both of those:
+    </p>
+    <pre class="fluid"><f:extend atom="my:atom1" />
+<f:extend atom="my:atom2" />
+
+<f:section name="default">
+    This section overrides the previously imported "default".
+</f:section>
+
+<this:primary /> <!-- comes from "atom1" (is not overridden) -->
+<this:secondary /> <!-- comes from "atom2" (is not overridden) -->
+<this:default /> <!-- comes from local template; overrides the one from "atom2" which overrides the one from "atom1" --></pre>
+    <p>
+        The result is that:
+    </p>
+    <ul>
+        <li>Section <code>primary</code> from <code><my:atom1 /></code> is rendered if you use <code><this:primary /></code></li>
+        <li>Section <code>secondary</code> from <code><my:atom2 /></code> is rendered if you use <code><this:secondary /></code></li>
+        <li>Section <code>default</code> from the local template is rendered if you use <code><this:default /></code></li>
+    </ul>
+    <h4>Section scope</h4>
+    <p>
+        Another effect if this is that if you directly render <code><my:atom1 /></code> then the <code>default</code>
+        section from that Atom is rendered. But extending <code><my:atom1 /></code> and overriding <code>default</code>
+        section causes <code><my:atom1 /></code> to still render the section, but using the override instead of the
+        one defined in <code><my:atom1 /></code>.
+    </p>
+    <p>
+        Yet another effect is that you can use <code><f:extend /></code> <strong>inside a section</strong> which makes
+        the section behave like a <strong>copy of</strong> the Atom you extend:
+    </p>
+    <pre class="fluid"><f:section name="mySection">
+    <f:extends atom="my:atom1" />
+    <f:section name="default">
+        Local override of "default" section
+    </f:section>
+</f:section>
+
+<this:mySection /></pre>
+    <p>
+        In words, <code><this:mySection /></code> becomes a copy of <code><my:atom1 /></code> but with the section named
+        <code>default</code> overridden by the one defined in <code>mySection</code>.
     </p>
 
     <h2>Sections in Atoms</h2>
