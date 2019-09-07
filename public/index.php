@@ -19,6 +19,7 @@ $menu = [
     'ViewHelpers' => '/?view=viewhelpers',
     'PHP API' => '/?view=php',
     'Documentation' => '/?view=doc',
+    'Examples' => '/?view=examples',
 ];
 
 
@@ -67,6 +68,10 @@ switch ($view) {
 
     case 'vocabulary':
         $file = __DIR__ . '/../private/templates/vocabulary.html';
+        break;
+
+    case 'examples':
+        $file = __DIR__ . '/../private/templates/examples.html';
         break;
 
     case 'doc':

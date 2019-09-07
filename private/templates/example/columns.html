@@ -1,0 +1,25 @@
+<f:description>
+    Columns Atom
+
+    Renders content from named sections into two columns, left and right.
+</f:description>
+
+<f:parameter name="sizes" type="array" description="Array of sizes of columns, range 1-12" default="[6,6]" />
+<f:parameter name="class" type="string" description="CSS class names (default: 'container row')" default="container row" />
+
+<div class="{class}">
+    <div class="col-{sizes.0} flex-column flex-fill border border-primary">
+        <this:left />
+    </div>
+    <div class="col-{sizes.1} flex-column flex-fill border border-success">
+        <this:right />
+    </div>
+</div>
+
+<f:section name="left">
+    <p>Default content of left column</p>
+</f:section>
+
+<f:section name="right">
+    <p>Default content of right column</p>
+</f:section>

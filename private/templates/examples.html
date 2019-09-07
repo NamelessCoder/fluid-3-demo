@@ -1,0 +1,95 @@
+<f:extend atom="demo:frame.default" />
+
+<f:description>
+    Outputs a list of Atoms.
+
+    Renders a full list of all Atoms contained in this example extension. Outputs arguments required by the Atom,
+    a description (if one is provided, like it is here) and usage examples (again, if provided).
+</f:description>
+
+<f:example title="Standard usage">
+    <demo:atoms />
+</f:example>
+
+<f:section name="main">
+    <div class="jumbotron bg-dark text-white">
+        <h2>Examples</h2>
+        <p class="lead">
+            Renderings of included example Atoms.
+        </p>
+    </div>
+    <div class="alert alert-warning">
+        <h4>Use the Source, Luke!</h4>
+        <p>
+            This page makes most sense when studying the source code, and the source code of the examples used herein.
+        </p>
+    </div>
+
+    <h2>Columns, simple</h2>
+    <p>
+        A default rendering of <code><demo:example.columns /></code>.
+    </p>
+    <demo:example.columns />
+
+    <hr />
+
+    <h2>Columns, custom content</h2>
+    <p>
+        A rendering of <code><demo:example.columns sizes="[8,4]" /></code> with overridden sections for left/right column.
+    </p>
+
+    <demo:example.columns sizes="[8,4]">
+        <f:section name="right">
+            <p>Overridden right column content.</p>
+        </f:section>
+    </demo:example.columns>
+
+    <hr />
+
+    <h2>Columns, recursive</h2>
+    <p>
+        A rendering of <code><demo:example.columns /></code> with overridden sections for only left column. As custom
+        content of left column, a nested rendering of <code><demo:example.columns /></code>. Custom class passed to
+        container element.
+    </p>
+    <demo:example.columns class="container row lead">
+        <f:section name="left">
+            <p>Overridden left column content.</p>
+            <demo:example.columns />
+        </f:section>
+    </demo:example.columns>
+
+    <hr />
+
+    <h2>Columns, local and reusable override</h2>
+    <p>
+        A rendering of a local override of <code><demo:example.columns /></code> to make overrides easily reusable.
+    </p>
+    <this:columns title="Required title" />
+</f:section>
+
+<f:section name="columns">
+    <f:comment>
+        A node added *before* f:extend comes *before* the normal body of the extended Atom.
+    </f:comment>
+
+    <h1>{title}</h1>
+    <f:extend atom="demo:example.columns" />
+
+    <f:comment>
+        Embedded components should come *after* the f:extend if they override parts of the extended Atom.
+    </f:comment>
+    <f:description>
+        A local override of the demo:example.columns Atom, with custom sections to avoid having to override
+        each section when using demo:example.columns.
+    </f:description>
+    <f:parameter name="title" type="string" description="Mandatory title" required="1" />
+</f:section>
+
+<f:section name="left">
+    Local override for left content.
+</f:section>
+
+<f:section name="right">
+    Local override for right content.
+</f:section>
