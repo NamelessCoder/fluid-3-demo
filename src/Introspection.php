@@ -67,7 +67,8 @@ class Introspection
         $this->parameters = $component->getArguments()->getDefinitions();
 
         foreach ($component->getTypedChildren(EntryNode::class)->getChildren() as $section) {
-            $this->sections[$section->getName()] = (new Introspection($namespace, $section->getName(), $section))->setParent($this);
+            $sectionName = $section->getComponentName();
+            $this->sections[$sectionName] = (new Introspection($namespace, $sectionName, $section))->setParent($this);
         };
 
         foreach ($component->getTypedChildren(ExampleViewHelper::class)->getChildren() as $index => $exampleNode) {
@@ -116,7 +117,7 @@ class Introspection
         if ($this->description instanceof ComponentInterface) {
             $description = '';
             foreach ($this->description->getChildren() as $index => $child) {
-                $description .= ($index > 0 ? '# Child: ' : '') . $child->getName() . PHP_EOL;
+                $description .= ($index > 0 ? '# Child: ' : '') . $child->getComponentName() . PHP_EOL;
                 $description .= $child->flatten(true) . PHP_EOL;
             }
             return $description;
@@ -158,7 +159,7 @@ class Introspection
         $node = $this;
         $path = $node->getName();
         while ($parent = $node->getParent()) {
-            $path = $parent->getName() . '.' . $path;
+            $path = $parent->getComponentName() . '.' . $path;
             $node = $parent;
         }
         return $this->namespace . ':' . $path;

@@ -32,8 +32,9 @@ class Lister
                     $namePart = substr($file->getPathname(), strlen($path), -5);
                     $namePart = str_replace('/', '.', $namePart);
                     $atom = $parser->parseFile($file->getPathname())->setName($namePart);
-                    if (!isset($atoms[$atom->getName()])) {
-                        $atoms[$atom->getName()] = new Introspection($namespace, $atom->getName(), $atom);
+                    $atomName = $atom->getComponentName();
+                    if (!isset($atoms[$atomName])) {
+                        $atoms[$atomName] = new Introspection($namespace, $atomName, $atom);
                     }
                 }
             }
