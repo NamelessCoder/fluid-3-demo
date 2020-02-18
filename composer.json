@@ -1,18 +1,14 @@
 {
   "name": "namelesscoder/fluid-3-demo",
-  "repositories": {
-    "typo3/fluid-engine": {
-      "type": "vcs",
-      "url": "https://github.com/NamelessCoder/Fluid"
-    }
-  },
   "autoload": {
     "psr-4": {
       "NamelessCoder\\Fluid3Demo\\": "src/"
     }
   },
   "require": {
-    "typo3/fluid-engine": "dev-master",
+    "typo3fluid/fluid": "^3.0",
     "php": "^7.2"
-  }
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
 }
