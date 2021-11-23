@@ -157,7 +157,7 @@ class Introspection
     public function getPath(): string
     {
         $node = $this;
-        $path = $node->getName();
+        $path = $node->getComponentName();
         while ($parent = $node->getParent()) {
             $path = $parent->getComponentName() . '.' . $path;
             $node = $parent;
@@ -171,7 +171,7 @@ class Introspection
     public function getUrl(): string
     {
         if ($this->parent) {
-            return '?component=' . $this->parent->getPath() . '&section=' . $this->getName();
+            return '?component=' . $this->parent->getPath() . '&section=' . $this->getComponentName();
         }
         return '?component=' . $this->getPath();
     }
@@ -187,7 +187,7 @@ class Introspection
         return $this->parent;
     }
 
-    public function getName(): string
+    public function getComponentName(): string
     {
         return $this->name;
     }
